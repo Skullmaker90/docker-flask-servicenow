@@ -5,7 +5,7 @@ from flask import jsonify
 from Servicenow import Servicenow
 
 app = Flask(__name__)
-app.secret_key = str(SECRET_KEY) 
+app.secret_key = 'SECRET_KEY' 
 
 def get_auth(user, passwd):
     SN = Servicenow()
