@@ -2,10 +2,13 @@ from flask import Flask
 from flask import request
 from flask import session
 from flask import jsonify
+from flask_cors import CORS
+
 from Servicenow import Servicenow
 
 app = Flask(__name__)
-app.secret_key = 'SECRET_KEY' 
+app.secret_key = 'SECRET_KEY'
+CORS(app)
 
 def get_auth(user, passwd):
     SN = Servicenow()
@@ -19,8 +22,8 @@ def get_auth(user, passwd):
 def index():
     if request.method == 'GET':
        if not 'username' in session:
-           return 'User not Authenticated'
-       return 'User Authenticated, please POST with query'
+           return jsonify('User not Authenticated')
+       return jsonify('User Authenticated, please POST with query')
     if request.method == 'POST':
        SN = get_auth(session['username'], session['passwd'])
        r = SN.get('?sysparm_query=' + request.form['query'])
@@ -31,7 +34,7 @@ def index():
        data = request.json['data']
        for _id in items:
            SN.put('/' + _id, data)
-       return 'Success', 200
+       return jsonify('Success'), 200
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -40,7 +43,7 @@ def login():
     if Servicenow().authenticate(user, passwd):
         session['username'] = user
         session['passwd'] = passwd
-        return 'Success', 200
+        return jsonify('Success'), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
