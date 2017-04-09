@@ -16,8 +16,8 @@ RUN mkdir -p /var/log/nginx/app /var/log/uwsgi/app /var/log/supervisor \
     && echo "daemon off;" >> /etc/nginx/nginx.conf \
     &&  pip install -r /var/www/app/requirements.txt \
     && chown -R www-data:www-data /var/www/app \
-    && chown -R www-data:www-data /var/log
-    && KEY=$(python -c 'import os; import binascii; print(binascii.hexlify(os.urandom(24)))')
+    && chown -R www-data:www-data /var/log \
+    && KEY=$(python -c 'import os; import binascii; print(binascii.hexlify(os.urandom(24)))') \
     && sed -i -e "s/SECRET_KEY/$KEY/g" /var/www/app/base.py
 
 CMD ["/usr/bin/supervisord"]
