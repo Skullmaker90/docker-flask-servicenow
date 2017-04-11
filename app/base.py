@@ -12,40 +12,40 @@ app.config.from_object(__name__)
 Session(app)
 CORS(app, supports_credentials=True)
 
+def check_auth(user, passwd):
+    response = Servicenow().authenticate(user, passwd)
+    return response
+
 def get_auth(user, passwd):
     SN = Servicenow()
-    r = SN.authenticate(user, passwd)
-    if r:
-      return SN
-    else:
-      return False
+    SN.authenticate(user, passwd)
+    return SN
 
 @app.route('/', methods=['GET', 'POST', 'PUT'])
 def index():
+    if not 'username' in session:
+        return jsonify({'status_code': 401, 'User not authenticated': ''})
     if request.method == 'GET':
-       if not 'username' in session:
-           return jsonify('User not Authenticated')
-       return jsonify('User Authenticated, please POST with query')
+        return jsonify({'status_code': 204, 'User authenticated': ''})
     if request.method == 'POST':
-       SN = get_auth(session.get('username'), session('passwd'))
-       r = SN.get('?sysparm_query=' + request.form['query'])
-       return jsonify(r.json())
+        r = session['callback'].get('?sysparm_query=' + request.form['query'])
+        return jsonify(r.json())
     if request.method == 'PUT':
-       SN = get_auth(session.get('username'), session('passwd'))
-       items = [item['sys_id'] for item in SN.get('?sysparm_query=' + request.json['query']).json()['result']]
-       data = request.json['data']
-       for _id in items:
-           SN.put('/' + _id, data)
-       return jsonify('Success'), 200
+        items = [item['sys_id'] for item in session['callback'].get('?sysparm_query=' + request.json['query']).json()['result']]
+        data = request.json['data']
+        for _id in items:
+            SN.put('/' + _id, data)
+        return jsonify({'status_code': 200, 'Success': ''})
 
 @app.route('/login', methods=['POST'])
 def login():
-    user = request.form['username']
-    passwd = request.form['password']
-    if Servicenow().authenticate(user, passwd):
+    user, passwd = request.form['username'], request.form['password']
+    is_success = check_auth(user, passwd)
+    if is_success['status_code'] == 200:
         session['username'] = user
-        session['passwd'] = passwd
-        return jsonify('Success'), 200
+        session['password'] = passwd
+        session['callback'] = get_auth(session['username'], session['password'])
+    return jsonify(is_success)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

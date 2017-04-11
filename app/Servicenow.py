@@ -18,13 +18,14 @@ class Servicenow(object):
         self.session.auth = (user, passwd)
         response = self.get('/fa7d5bf6dbf97240b3bbd211ce9619c5')
         if response.status_code != 200:
-            return "Authentication Failed"
-        return True
+            return {'status_code': 401, 'Authentication Failed': ''}
+        else:
+            return {'status_code': 200, 'Authentication Success': ''}
 
     def fetch(self, func, uri, data=None):
         success_codes = {'get': 200, 'post': 201, 'put': 200, 'patch': 200, 'delete': 204}
         if not self.session.auth:
-            return "User Not Authenticated"
+            return {'status_code': 401, 'User not authenticated': ''}
         try:
             response = func(uri, data=data)
         except:
